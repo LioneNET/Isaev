@@ -1,0 +1,57 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: laravel_web
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./src:/var/www/laravel_docker
+      - ./nginx:/etc/nginx/conf.d
+    networks:
+      - laravel_network
+    links:
+      - php-fpm
+
+  php-fpm:
+    container_name: laravel-php-fpm
+    user: "${UID:-1000}:${GID:-1000}"
+    build:
+      context: php
+      args:
+        USER_ID: ${UID:-1000}
+        GROUP_ID: ${GID:-1000}
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    working_dir: /var/www/laravel_docker
+    volumes:
+      - ./src:/var/www/laravel_docker
+    networks:
+      - laravel_network
+      
+  psg-equip:
+    image: postgres:14.9-alpine
+    volumes:
+      - postgres-equip:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=postgres
+      - LANG=C.UTF-8
+    logging:
+      options:
+        max-file: "7"
+        max-size: "5m"
+    networks:
+      - laravel_network
+      
+networks:
+  laravel_network:
+    driver: bridge
+    
+volumes:
+  postgres-equip:
+
+
